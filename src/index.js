@@ -8,9 +8,8 @@ import './styles.css';
 const DEFAULTS = {
   endpoint: 'https://api.z.ai/api/paas/v4/chat/completions',
   model: 'glm-5.2',
-  apiKey: 'a0f50057b2e44824ad167348d6dbc10d.vHBSt6Ky7v8Dstzs',
-  demoMode: false,
-  system: 'أنت مساعد ذكي ومفيد جداً. أجب بالعربية بوضوح وصدق وإبداع. تفاعل مع المستخدم بحماس وقدم إجابات مفصلة وعملية وممتعة.'
+  apiKey: '',
+  system: 'أنت مساعد ذكي ومفيد جداً. أجب بالعربية بوضوح وصدق وإبداع. تفاعل مع المستخدم بحماس وقدم إجابات مفصلة وعملية وممتعة. كن ودياً وسهل التعامل معه.'
 };
 
 const id = () => crypto.randomUUID();
@@ -23,7 +22,7 @@ function App() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState(!settings.apiKey);
   const [copied, setCopied] = useState('');
   const [status, setStatus] = useState('');
   const bottom = useRef(null);
@@ -45,6 +44,12 @@ function App() {
   const send = async (value = input) => {
     const text = value.trim();
     if (!text || busy) return;
+
+    if (!settings.apiKey.trim()) {
+      setStatus('⚠️ أضف مفتاح Z.ai من الإعدادات أولاً');
+      setShowSettings(true);
+      return;
+    }
 
     const user = { id: id(), role: 'user', content: text, time: Date.now() };
     const history = [...(current?.messages || []), user];
@@ -115,7 +120,7 @@ function App() {
     }
     localStorage.setItem('aichat-settings', JSON.stringify(settings));
     setShowSettings(false);
-    setStatus('✅ تم حفظ الإعدادات');
+    setStatus('✅ تم حفظ الإعدادات بأمان على جهازك');
     setTimeout(() => setStatus(''), 2000);
   };
 
@@ -157,7 +162,7 @@ function App() {
       <div className="side-bottom">
         {menu && <>
           <button onClick={() => setShowSettings(true)}><FiSettings /> الإعدادات</button>
-          <small>متصل بـ Z.ai · GLM-5.2</small>
+          <small>{settings.apiKey ? '✅ متصل بـ Z.ai' : '⚠️ بحاجة مفتاح'}</small>
         </>}
       </div>
     </aside>
@@ -167,7 +172,7 @@ function App() {
         <button className="icon-btn" onClick={() => setMenu(value => !value)}><FiMenu /></button>
         <div>
           <strong>{current?.title || 'AI Chat'}</strong>
-          <small>GLM-5.2 · Z.ai · {busy ? '🟢 جاري الاتصال' : '⚪ جاهز'}</small>
+          <small>GLM-5.2 · Z.ai · {busy ? '🟢 جاري الاتصال' : settings.apiKey ? '⚪ جاهز' : '⚠️ بحاجة إعدادات'}</small>
         </div>
         <div className="header-actions">
           {status && <span className="status-msg">{status}</span>}
@@ -180,12 +185,14 @@ function App() {
           <div className="welcome">
             <div className="welcome-icon"><FiZap /></div>
             <h1>كيف أساعدك اليوم؟</h1>
-            <p>متصل مباشرة بـ Z.ai GLM-5.2 بقوة كاملة. اكتب أي سؤال وستحصل على رد ذكي وسريع.</p>
-            <div className="prompts">
-              <button onClick={() => send('مرحباً! من أنت وما إمكانياتك؟')}>تحدث معي</button>
-              <button onClick={() => send('اقترح لي فكرة تطبيق مبتكرة وقوية')}>فكرة تطبيق</button>
-              <button onClick={() => send('اكتب لي خطة تعلم عملية واحترافية للبرمجة')}>خطة تعلم</button>
-            </div>
+            <p>{settings.apiKey ? 'متصل مباشرة بـ Z.ai GLM-5.2 بقوة كاملة. اكتب أي سؤال وستحصل على رد ذكي وسريع.' : 'أدخل مفتاح Z.ai من الإعدادات لبدء المحادثة'}</p>
+            {settings.apiKey && (
+              <div className="prompts">
+                <button onClick={() => send('مرحباً! من أنت وما إمكانياتك؟')}>تحدث معي</button>
+                <button onClick={() => send('اقترح لي فكرة تطبيق مبتكرة وقوية')}>فكرة تطبيق</button>
+                <button onClick={() => send('اكتب لي خطة تعلم عملية واحترافية للبرمجة')}>خطة تعلم</button>
+              </div>
+            )}
           </div>
         ) : (
           current.messages.map(m => (
@@ -228,13 +235,14 @@ function App() {
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder="اكتب رسالتك هنا... (Enter للإرسال)"
             rows="1"
+            disabled={!settings.apiKey}
           />
           <div className="composer-actions">
-            <button title="إدراج ملف" onClick={() => fileRef.current.click()}><FiPaperclip /></button>
+            <button title="إدراج ملف" onClick={() => fileRef.current.click()} disabled={!settings.apiKey}><FiPaperclip /></button>
             <button
               className="send"
               onClick={() => send()}
-              disabled={busy || !input.trim()}
+              disabled={busy || !input.trim() || !settings.apiKey}
             >
               <FiSend />
             </button>
@@ -242,7 +250,7 @@ function App() {
           <input ref={fileRef} type="file" hidden onChange={insert} />
         </div>
         <small className="hint">
-          🔐 مفتاح Z.ai محفوظ محلياً · اتصال مباشر وآمن · لا تقلق على خصوصيتك
+          {settings.apiKey ? '🔐 مفتاح محفوظ محلياً على جهازك فقط · اتصال آمن مباشر بـ Z.ai' : '⚠️ أضف مفتاح Z.ai من الإعدادات للبدء'}
         </small>
       </div>
     </main>
@@ -257,12 +265,19 @@ function App() {
         >
           <motion.div className="modal" initial={{ scale: 0.95 }} animate={{ scale: 1 }}>
             <div className="modal-head">
-              <h2>إعدادات Z.ai</h2>
-              <button onClick={() => setShowSettings(false)}><FiX /></button>
+              <h2>إعدادات Z.ai الآمنة</h2>
+              <button onClick={() => { if (settings.apiKey) setShowSettings(false); }}><FiX /></button>
             </div>
 
             <div className="notice">
-              <FiAlertCircle /> أنت متصل مباشرة بـ Z.ai. المفتاح محفوظ محلياً على جهازك فقط.
+              <FiAlertCircle /> 
+              <div>
+                <strong>🔒 خصوصيتك محمية:</strong><br/>
+                ✓ مفتاحك يُحفظ محلياً على جهازك فقط<br/>
+                ✓ لا يُرسل إلى GitHub أو أي خادم ثالث<br/>
+                ✓ لا يراه سوى أنت أو من يستخدم نفس الحساب<br/>
+                ✓ محفوظ بشكل آمن في localStorage
+              </div>
             </div>
 
             <label>
@@ -271,7 +286,7 @@ function App() {
                 type="password"
                 value={settings.apiKey}
                 onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
-                placeholder="مفتاحك الخاص..."
+                placeholder="ألصق مفتاحك من z.ai هنا"
               />
             </label>
 
@@ -285,6 +300,14 @@ function App() {
             </label>
 
             <label>
+              🔗 رابط Z.ai
+              <input
+                value={settings.endpoint}
+                onChange={e => setSettings({ ...settings, endpoint: e.target.value })}
+              />
+            </label>
+
+            <label>
               📝 تعليمات النظام
               <textarea
                 value={settings.system}
@@ -294,8 +317,10 @@ function App() {
             </label>
 
             <div className="modal-actions">
-              <button onClick={() => setShowSettings(false)}>إلغاء</button>
-              <button className="primary" onClick={saveSettings}>حفظ والاتصال</button>
+              {settings.apiKey && <button onClick={() => setShowSettings(false)}>إغلاق</button>}
+              <button className="primary" onClick={saveSettings}>
+                {settings.apiKey ? 'حفظ التعديلات' : 'حفظ والبدء'}
+              </button>
             </div>
           </motion.div>
         </motion.div>
