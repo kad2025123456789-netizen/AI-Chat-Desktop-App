@@ -1,0 +1,57 @@
+{
+  "name": "ai-chat-desktop",
+  "version": "1.0.0",
+  "description": "تطبيق شات ذكي مع إنشاء صور - Desktop Chat Application with AI Image Generation",
+  "main": "public/electron.js",
+  "homepage": "./",
+  "author": "Developer",
+  "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.0",
+    "react-icons": "^4.12.0",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^10.16.0",
+    "zustand": "^4.4.0"
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.0",
+    "react-scripts": "5.0.1",
+    "cross-env": "^7.0.3"
+  },
+  "scripts": {
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "react-test": "react-scripts test",
+    "react-eject": "react-scripts eject",
+    "electron-dev": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-build": "npm run react-build && electron-builder",
+    "start": "npm run electron-dev",
+    "build": "npm run electron-build"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "appId": "com.aichat.app",
+    "productName": "AI Chat Desktop",
+    "files": [
+      "build/**/*",
+      "public/electron.js"
+    ],
+    "directories": {
+      "buildResources": "public"
+    }
+  }
+}
